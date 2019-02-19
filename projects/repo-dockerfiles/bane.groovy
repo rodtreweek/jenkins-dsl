@@ -2,12 +2,15 @@ freeStyleJob('bane') {
     displayName('bane')
     description('Build Dockerfiles in genuinetools/bane.')
 
+    concurrentBuild()
     checkoutRetryCount(3)
 
     properties {
         githubProjectUrl('https://github.com/genuinetools/bane')
         sidebarLinks {
             link('https://hub.docker.com/r/jess/bane', 'Docker Hub: jess/bane', 'notepad.png')
+            link('https://hub.docker.com/r/jessfraz/bane', 'Docker Hub: jessfraz/bane', 'notepad.png')
+            link('https://r.j3ss.co/repo/bane/tags', 'Registry: r.j3ss.co/bane', 'notepad.png')
         }
     }
 
@@ -21,7 +24,7 @@ freeStyleJob('bane') {
             remote {
                 url('https://github.com/genuinetools/bane.git')
             }
-branches('*/master')
+            branches('*/master', '*/tags/*')
             extensions {
                 wipeOutWorkspace()
                 cleanAfterCheckout()
@@ -40,8 +43,11 @@ branches('*/master')
     steps {
         shell('docker build --rm --force-rm -t r.j3ss.co/bane:latest .')
         shell('docker tag r.j3ss.co/bane:latest jess/bane:latest')
+        shell('docker tag r.j3ss.co/bane:latest jessfraz/bane:latest')
         shell('docker push --disable-content-trust=false r.j3ss.co/bane:latest')
         shell('docker push --disable-content-trust=false jess/bane:latest')
+        shell('docker push --disable-content-trust=false jessfraz/bane:latest')
+        shell('for tag in $(git tag); do git checkout $tag; docker build  --rm --force-rm -t r.j3ss.co/bane:$tag . || true; docker push --disable-content-trust=false r.j3ss.co/bane:$tag || true; docker tag r.j3ss.co/bane:$tag jess/bane:$tag || true; docker push --disable-content-trust=false jess/bane:$tag || true; done')
         shell('docker rm $(docker ps --filter status=exited -q 2>/dev/null) 2> /dev/null || true')
         shell('docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2> /dev/null || true')
     }

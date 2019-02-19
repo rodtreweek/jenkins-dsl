@@ -2,12 +2,15 @@ freeStyleJob('openvpn_server') {
     displayName('openvpn-server')
     description('Build Dockerfiles in kylemanna/docker-openvpn.')
 
+    concurrentBuild()
     checkoutRetryCount(3)
 
     properties {
         githubProjectUrl('https://github.com/kylemanna/docker-openvpn')
         sidebarLinks {
             link('https://hub.docker.com/r/jess/openvpn-server', 'Docker Hub: jess/openvpn-server', 'notepad.png')
+            link('https://hub.docker.com/r/jessfraz/openvpn-server', 'Docker Hub: jessfraz/openvpn-server', 'notepad.png')
+            link('https://r.j3ss.co/repo/openvpn-server/tags', 'Registry: r.j3ss.co/openvpn-server', 'notepad.png')
         }
     }
 
@@ -21,7 +24,7 @@ freeStyleJob('openvpn_server') {
             remote {
                 url('https://github.com/kylemanna/docker-openvpn.git')
             }
-branches('*/master')
+            branches('*/master', '*/tags/*')
             extensions {
                 wipeOutWorkspace()
                 cleanAfterCheckout()
@@ -40,8 +43,11 @@ branches('*/master')
     steps {
         shell('docker build --rm --force-rm -t r.j3ss.co/openvpn-server:latest .')
         shell('docker tag r.j3ss.co/openvpn-server:latest jess/openvpn-server:latest')
+        shell('docker tag r.j3ss.co/openvpn-server:latest jessfraz/openvpn-server:latest')
         shell('docker push --disable-content-trust=false r.j3ss.co/openvpn-server:latest')
         shell('docker push --disable-content-trust=false jess/openvpn-server:latest')
+        shell('docker push --disable-content-trust=false jessfraz/openvpn-server:latest')
+        shell('for tag in $(git tag); do git checkout $tag; docker build  --rm --force-rm -t r.j3ss.co/openvpn-server:$tag . || true; docker push --disable-content-trust=false r.j3ss.co/openvpn-server:$tag || true; docker tag r.j3ss.co/openvpn-server:$tag jess/openvpn-server:$tag || true; docker push --disable-content-trust=false jess/openvpn-server:$tag || true; done')
         shell('docker rm $(docker ps --filter status=exited -q 2>/dev/null) 2> /dev/null || true')
         shell('docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2> /dev/null || true')
     }

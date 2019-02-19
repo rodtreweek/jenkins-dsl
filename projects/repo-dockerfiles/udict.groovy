@@ -2,12 +2,15 @@ freeStyleJob('udict') {
     displayName('udict')
     description('Build Dockerfiles in genuinetools/udict.')
 
+    concurrentBuild()
     checkoutRetryCount(3)
 
     properties {
         githubProjectUrl('https://github.com/genuinetools/udict')
         sidebarLinks {
             link('https://hub.docker.com/r/jess/udict', 'Docker Hub: jess/udict', 'notepad.png')
+            link('https://hub.docker.com/r/jessfraz/udict', 'Docker Hub: jessfraz/udict', 'notepad.png')
+            link('https://r.j3ss.co/repo/udict/tags', 'Registry: r.j3ss.co/udict', 'notepad.png')
         }
     }
 
@@ -21,7 +24,7 @@ freeStyleJob('udict') {
             remote {
                 url('https://github.com/genuinetools/udict.git')
             }
-branches('*/master')
+            branches('*/master', '*/tags/*')
             extensions {
                 wipeOutWorkspace()
                 cleanAfterCheckout()
@@ -40,8 +43,11 @@ branches('*/master')
     steps {
         shell('docker build --rm --force-rm -t r.j3ss.co/udict:latest .')
         shell('docker tag r.j3ss.co/udict:latest jess/udict:latest')
+        shell('docker tag r.j3ss.co/udict:latest jessfraz/udict:latest')
         shell('docker push --disable-content-trust=false r.j3ss.co/udict:latest')
         shell('docker push --disable-content-trust=false jess/udict:latest')
+        shell('docker push --disable-content-trust=false jessfraz/udict:latest')
+        shell('for tag in $(git tag); do git checkout $tag; docker build  --rm --force-rm -t r.j3ss.co/udict:$tag . || true; docker push --disable-content-trust=false r.j3ss.co/udict:$tag || true; docker tag r.j3ss.co/udict:$tag jess/udict:$tag || true; docker push --disable-content-trust=false jess/udict:$tag || true; done')
         shell('docker rm $(docker ps --filter status=exited -q 2>/dev/null) 2> /dev/null || true')
         shell('docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2> /dev/null || true')
     }

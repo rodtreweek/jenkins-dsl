@@ -2,12 +2,15 @@ freeStyleJob('secping') {
     displayName('secping')
     description('Build Dockerfiles in jessfraz/secping.')
 
+    concurrentBuild()
     checkoutRetryCount(3)
 
     properties {
         githubProjectUrl('https://github.com/jessfraz/secping')
         sidebarLinks {
             link('https://hub.docker.com/r/jess/secping', 'Docker Hub: jess/secping', 'notepad.png')
+            link('https://hub.docker.com/r/jessfraz/secping', 'Docker Hub: jessfraz/secping', 'notepad.png')
+            link('https://r.j3ss.co/repo/secping/tags', 'Registry: r.j3ss.co/secping', 'notepad.png')
         }
     }
 
@@ -21,7 +24,7 @@ freeStyleJob('secping') {
             remote {
                 url('https://github.com/jessfraz/secping.git')
             }
-branches('*/master')
+            branches('*/master', '*/tags/*')
             extensions {
                 wipeOutWorkspace()
                 cleanAfterCheckout()
@@ -40,8 +43,11 @@ branches('*/master')
     steps {
         shell('docker build --rm --force-rm -t r.j3ss.co/secping:latest .')
         shell('docker tag r.j3ss.co/secping:latest jess/secping:latest')
+        shell('docker tag r.j3ss.co/secping:latest jessfraz/secping:latest')
         shell('docker push --disable-content-trust=false r.j3ss.co/secping:latest')
         shell('docker push --disable-content-trust=false jess/secping:latest')
+        shell('docker push --disable-content-trust=false jessfraz/secping:latest')
+        shell('for tag in $(git tag); do git checkout $tag; docker build  --rm --force-rm -t r.j3ss.co/secping:$tag . || true; docker push --disable-content-trust=false r.j3ss.co/secping:$tag || true; docker tag r.j3ss.co/secping:$tag jess/secping:$tag || true; docker push --disable-content-trust=false jess/secping:$tag || true; done')
         shell('docker rm $(docker ps --filter status=exited -q 2>/dev/null) 2> /dev/null || true')
         shell('docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2> /dev/null || true')
     }

@@ -1,11 +1,11 @@
-freeStyleJob('contained_af') {
-    displayName('contained.af')
-    description('Build Dockerfiles for contained.af.')
+freeStyleJob('distro') {
+    displayName('distro')
+    description('Build Dockerfiles for distro.')
 
     checkoutRetryCount(3)
 
     properties {
-        githubProjectUrl('https://github.com/jessfraz/contained.af')
+        githubProjectUrl('https://github.com/jessfraz/distro')
     }
 
     logRotator {
@@ -15,7 +15,10 @@ freeStyleJob('contained_af') {
 
     scm {
         git {
-            remote { url('https://github.com/jessfraz/contained.af.git') }
+            remote {
+                url('git@github.com:jessfraz/distro.git')
+                credentials('distro-deploy-key')
+            }
             branches('*/master')
             extensions {
                 wipeOutWorkspace()
@@ -31,18 +34,10 @@ freeStyleJob('contained_af') {
 
     wrappers { colorizeOutput() }
 
-    environmentVariables(DOCKER_CONTENT_TRUST: '1')
+    environmentVariables(DOCKER_CONTENT_TRUST: '0')
     steps {
-        shell('docker build --rm --force-rm -t r.j3ss.co/contained:latest .')
-        shell('docker tag r.j3ss.co/contained:latest jess/contained:latest')
-        shell('docker push --disable-content-trust=false r.j3ss.co/contained:latest')
-        shell('docker push --disable-content-trust=false jess/contained:latest')
-
-        shell('docker build --rm --force-rm -f Dockerfile.dind -t r.j3ss.co/docker:userns .')
-        shell('docker tag r.j3ss.co/docker:userns jess/docker:userns')
-        shell('docker push --disable-content-trust=false r.j3ss.co/docker:userns')
-        shell('docker push --disable-content-trust=false jess/docker:userns')
-
+        shell('docker build --rm --force-rm -t r.j3ss.co/distro:latest .')
+        shell('docker push --disable-content-trust=false r.j3ss.co/distro:latest')
         shell('docker rm $(docker ps --filter status=exited -q 2>/dev/null) 2> /dev/null || true')
         shell('docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2> /dev/null || true')
     }

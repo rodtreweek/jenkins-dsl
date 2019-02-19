@@ -2,12 +2,15 @@ freeStyleJob('upmail') {
     displayName('upmail')
     description('Build Dockerfiles in genuinetools/upmail.')
 
+    concurrentBuild()
     checkoutRetryCount(3)
 
     properties {
         githubProjectUrl('https://github.com/genuinetools/upmail')
         sidebarLinks {
             link('https://hub.docker.com/r/jess/upmail', 'Docker Hub: jess/upmail', 'notepad.png')
+            link('https://hub.docker.com/r/jessfraz/upmail', 'Docker Hub: jessfraz/upmail', 'notepad.png')
+            link('https://r.j3ss.co/repo/upmail/tags', 'Registry: r.j3ss.co/upmail', 'notepad.png')
         }
     }
 
@@ -21,7 +24,7 @@ freeStyleJob('upmail') {
             remote {
                 url('https://github.com/genuinetools/upmail.git')
             }
-branches('*/master')
+            branches('*/master', '*/tags/*')
             extensions {
                 wipeOutWorkspace()
                 cleanAfterCheckout()
@@ -40,8 +43,11 @@ branches('*/master')
     steps {
         shell('docker build --rm --force-rm -t r.j3ss.co/upmail:latest .')
         shell('docker tag r.j3ss.co/upmail:latest jess/upmail:latest')
+        shell('docker tag r.j3ss.co/upmail:latest jessfraz/upmail:latest')
         shell('docker push --disable-content-trust=false r.j3ss.co/upmail:latest')
         shell('docker push --disable-content-trust=false jess/upmail:latest')
+        shell('docker push --disable-content-trust=false jessfraz/upmail:latest')
+        shell('for tag in $(git tag); do git checkout $tag; docker build  --rm --force-rm -t r.j3ss.co/upmail:$tag . || true; docker push --disable-content-trust=false r.j3ss.co/upmail:$tag || true; docker tag r.j3ss.co/upmail:$tag jess/upmail:$tag || true; docker push --disable-content-trust=false jess/upmail:$tag || true; done')
         shell('docker rm $(docker ps --filter status=exited -q 2>/dev/null) 2> /dev/null || true')
         shell('docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2> /dev/null || true')
     }

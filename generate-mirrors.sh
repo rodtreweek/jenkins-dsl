@@ -43,6 +43,9 @@ generate_dsl(){
 	local name=${orig#*/}
 
 	rname=${name//-/_}
+	if [[ "$rname" != "go_get_issue"* ]]; then
+		rname=${rname//1/one}
+	fi
 	file="${DIR}/projects/mirrors/${rname//./_}.groovy"
 
 	if [[ "$GITHUB_USER" == "$user" ]]; then
@@ -53,7 +56,7 @@ generate_dsl(){
 
 	echo "${file} | ${dest}"
 
-	cat <<-EOF > $file
+	cat <<-EOF > "$file"
 freeStyleJob('mirror_${rname//./_}') {
     displayName('mirror-${name}')
     description('Mirror github.com/${orig} to g.j3ss.co/${dest}.')
@@ -125,7 +128,7 @@ get_repos(){
 	get_last_page "${header}"
 
 	local repos
-	repos=$(echo "$body" | jq --raw-output '.[] | {fullname:.full_name,repo:.name,fork:.fork,description:.description} | @base64')
+	repos=$(echo "$body" | jq --raw-output '.[] | {fullname:.full_name,repo:.name,fork:.fork} | @base64')
 
 	for r in $repos; do
 		raw="$(echo "$r" | base64 -d)"
@@ -133,8 +136,6 @@ get_repos(){
 		fullname=$(echo "$raw" | jq --raw-output '.fullname')
 		local repo
 		repo=$(echo "$raw" | jq --raw-output '.repo')
-		local description
-		description=$(echo "$raw" | jq --raw-output '.description')
 		local fork
 		fork=$(echo "$raw" | jq --raw-output '.fork')
 
@@ -159,7 +160,9 @@ get_repos(){
 }
 
 main(){
-	mkdir -p $DIR/projects/mirrors
+	rm -rf "$DIR/projects/mirrors"
+	mkdir -p "$DIR/projects/mirrors"
+
 	echo "FILE | REPO"
 
 	# Get the personal repos.

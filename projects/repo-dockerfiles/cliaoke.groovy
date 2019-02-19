@@ -2,12 +2,15 @@ freeStyleJob('cliaoke') {
     displayName('cliaoke')
     description('Build Dockerfiles in jessfraz/cliaoke.')
 
+    concurrentBuild()
     checkoutRetryCount(3)
 
     properties {
         githubProjectUrl('https://github.com/jessfraz/cliaoke')
         sidebarLinks {
             link('https://hub.docker.com/r/jess/cliaoke', 'Docker Hub: jess/cliaoke', 'notepad.png')
+            link('https://hub.docker.com/r/jessfraz/cliaoke', 'Docker Hub: jessfraz/cliaoke', 'notepad.png')
+            link('https://r.j3ss.co/repo/cliaoke/tags', 'Registry: r.j3ss.co/cliaoke', 'notepad.png')
         }
     }
 
@@ -21,7 +24,7 @@ freeStyleJob('cliaoke') {
             remote {
                 url('https://github.com/jessfraz/cliaoke.git')
             }
-branches('*/master')
+            branches('*/master', '*/tags/*')
             extensions {
                 wipeOutWorkspace()
                 cleanAfterCheckout()
@@ -40,8 +43,11 @@ branches('*/master')
     steps {
         shell('docker build --rm --force-rm -t r.j3ss.co/cliaoke:latest .')
         shell('docker tag r.j3ss.co/cliaoke:latest jess/cliaoke:latest')
+        shell('docker tag r.j3ss.co/cliaoke:latest jessfraz/cliaoke:latest')
         shell('docker push --disable-content-trust=false r.j3ss.co/cliaoke:latest')
         shell('docker push --disable-content-trust=false jess/cliaoke:latest')
+        shell('docker push --disable-content-trust=false jessfraz/cliaoke:latest')
+        shell('for tag in $(git tag); do git checkout $tag; docker build  --rm --force-rm -t r.j3ss.co/cliaoke:$tag . || true; docker push --disable-content-trust=false r.j3ss.co/cliaoke:$tag || true; docker tag r.j3ss.co/cliaoke:$tag jess/cliaoke:$tag || true; docker push --disable-content-trust=false jess/cliaoke:$tag || true; done')
         shell('docker rm $(docker ps --filter status=exited -q 2>/dev/null) 2> /dev/null || true')
         shell('docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2> /dev/null || true')
     }

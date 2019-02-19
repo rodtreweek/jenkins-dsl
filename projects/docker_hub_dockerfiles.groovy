@@ -2,7 +2,7 @@ freeStyleJob('docker_hub_dockerfiles') {
     displayName('docker-hub-dockerfiles')
     description('Build all the Dockerfiles in jessfraz/dockerfiles repo and push them to Docker Hub.')
 
-    weight(4)
+    weight(6)
 
     checkoutRetryCount(3)
 
@@ -44,7 +44,7 @@ freeStyleJob('docker_hub_dockerfiles') {
     }
 
     environmentVariables(DOCKER_CONTENT_TRUST: '1')
-    environmentVariables(JOBS: '5')
+    environmentVariables(JOBS: '15')
     steps {
         shell('REPO_URL=jess ./build-all.sh')
         shell('REPO_URL=jessfraz ./build-all.sh')

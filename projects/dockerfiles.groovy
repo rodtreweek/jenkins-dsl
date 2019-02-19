@@ -2,7 +2,7 @@ freeStyleJob('dockerfiles') {
     displayName('dockerfiles')
     description('Build all the Dockerfiles in jessfraz/dockerfiles repo and pushes them to r.j3ss.co.')
 
-    weight(4)
+    weight(6)
 
     checkoutRetryCount(3)
 
@@ -44,7 +44,7 @@ freeStyleJob('dockerfiles') {
     }
 
     environmentVariables(DOCKER_CONTENT_TRUST: '1')
-    environmentVariables(JOBS: '5')
+    environmentVariables(JOBS: '15')
     steps {
         shell('./build-all.sh')
         shell('docker rm $(docker ps --filter status=exited -q 2>/dev/null) 2> /dev/null || true')
